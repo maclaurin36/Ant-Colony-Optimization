@@ -108,7 +108,7 @@ class TSPSolver:
 
 			# Pick a random city - constant time
 			randCityIndex = random.randrange(0, len(cities) - 1)
-			
+
 			# Initialize route and start city
 			# Time complexity: O(1)
 			# Space complexity: O(n) Eventually the route and set of cities visited will include all cities 2n
@@ -133,7 +133,7 @@ class TSPSolver:
 
 				# Go to that city
 				nearestNeighbor = self.getGreedyNeighbor(nearestNeighbor, cityVisitedSet)
-			
+
 			# If all cities haven't been visited, restart (failed because greedy path didn't work)
 			if len(cityVisitedSet) == len(cities) and route[len(route) - 1].costTo(startCity) != math.inf:
 
@@ -206,4 +206,45 @@ class TSPSolver:
 	'''
 
 	def fancy( self,time_allowance=60.0 ):
+
+		# PSEUDO-CODE FOR ANT SYSTEM ALGORITHM
+
+		# Initialize array P of pheromone strength for each edge ij
+		# Initialize list of k ants
+
+		# while (termination condition not met)
+		# 	run_ants()
+		#	update_pheromones()
+		# Return BSSF
+
+
+
+		# def run_ants()
+		#	for each ant x:
+		#		start at random city C
+		#		append city to ant_path
+		#		while (len(ant_path) < n and nextcity is not C)
+		#			nextcity = pick_next_city()
+		#			append city to path
+		#		if ant_path < BSSF
+		#			BSSF = ant_path
+
+		# def pick_next_city()
+		#	list L of probability to move to next city
+		#		L[i][j] = (P[i][j])^alpha  *  (E[i][j])^beta
+
+		# def UpdatePheromone()
+		#	initialize new array S for each edge ij
+		#	for each ant
+		#		for each edge ij used by ant:
+		#			S[i][j] = S[i][j] + 1/length of ant_path
+
+		#	for each edge ij
+		#			P[i][j] = P[i][j] * (1 - EVAPORATION_RATE) + S[i][j]
+
+
+
+
+
+
 		pass
