@@ -6,6 +6,8 @@
 # This is a test Adam
 # This is from a branch
 
+# AB TIME: 45
+
 
 
 from typing import List, Set
@@ -229,11 +231,24 @@ class TSPSolver:
 		#		if ant_path < BSSF
 		#			BSSF = ant_path
 
-		# def pick_next_city()
-		#	list L of probability to move to next city
-		#		L[i][j] = (P[i][j])^alpha  *  (E[i][j])^beta
 
-		# def UpdatePheromone()
+
+		# def pick_next_city()
+		# 	for all cities
+		#		if cant reach or been to -> break
+		# 		get score (list)
+		#		sum += score
+
+		# 	for all cities
+		#		if cant reach or been to -> break
+		#		p[j] = score[j] / sum
+
+		# 	city = roulette(p)
+		# 	return city
+
+
+
+		# def update_pheromone()
 		#	initialize new array S for each edge ij
 		#	for each ant
 		#		for each edge ij used by ant:
@@ -241,9 +256,6 @@ class TSPSolver:
 
 		#	for each edge ij
 		#			P[i][j] = P[i][j] * (1 - EVAPORATION_RATE) + S[i][j]
-
-
-
 
 
 
