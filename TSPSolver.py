@@ -12,6 +12,8 @@
 
 from typing import List, Set
 from xmlrpc.client import Boolean
+from Ant import Ant
+
 from which_pyqt import PYQT_VER
 if PYQT_VER == 'PYQT5':
 	from PyQt5.QtCore import QLineF, QPointF
@@ -109,7 +111,7 @@ class TSPSolver:
 		while not solutionFound and startTime - time.time() < time_allowance:
 
 			# Pick a random city - constant time
-			randCityIndex = random.randrange(0, len(cities) - 1)
+			randCityIndex = random.randint(0, len(cities) - 1)
 
 			# Initialize route and start city
 			# Time complexity: O(1)
@@ -207,19 +209,110 @@ class TSPSolver:
 		algorithm</returns>
 	'''
 
+	# 4.5 hours - Jesse
 	def fancy( self,time_allowance=60.0 ):
 
 		# PSEUDO-CODE FOR ANT SYSTEM ALGORITHM
 
-		# Initialize array P of pheromone strength for each edge ij
-		# Initialize list of k ants
+		cities: List[City] = self._scenario.getCities()
+		edges: List[List[Boolean]] = self._scenario._edge_exists
 
+		NUM_ANTS = 10
+
+		# Create the cost matrix for easier reference
+		# Initialize array P of pheromone strength for each edge ij - can't initialize to 0 because numerator is multiplied
+		edgeMatrix: List[List[int]] = []
+		pheremoneMatrix: List[List[float]] = []
+		for row in range(0, len(edges)):
+			edgeMatrix.append([])
+			pheremoneMatrix.append([])
+			for col in range(0, len(edges)):
+				pheremoneMatrix[row].append(1.0)
+				if edges[row][col]:
+					edgeMatrix[row].append(cities[row].costTo(cities[col]))
+				else:
+					edgeMatrix[row].append(math.inf)
+
+		# Initialize list of k ants
+		antColony = []
+		for i in range(0, NUM_ANTS):
+			startCity = random.randint(0, len(cities) - 1)
+			antColony.append(Ant(startCity))
+
+		# Begin running the ant algorithm - need to deal with the terminating condition
+		startTime = time.time()
+		terminatingCondition = False
+		bestAnt: Ant = None
+		while not terminatingCondition and time.time() - startTime < time_allowance:
+			bestRoundAnt: Ant = self.run_ants(cities, edgeMatrix, pheremoneMatrix, antColony)
+			# Update the best ant if applicable
+			if bestAnt == None or bestRoundAnt.distanceTraveled < bestAnt.distanceTraveled:
+				bestAnt = bestRoundAnt
+			self.update_pheremones(pheremoneMatrix, antColony)
+			# Clear the ants
+			antColony = []
+			for i in range(0, NUM_ANTS):
+				startCity = random.randint(0, len(cities) - 1)
+				antColony.append(Ant(startCity))
+
+		endTime = time.time()
+
+		# Create what the GUI needs to show the new path
+		# Time complexity: O(n)
+		# Space complexity: O(n)
+		bssfRoute = []
+		if bestAnt != None:
+			for cityIndex in bestAnt.antPath:
+				bssfRoute.append(cities[cityIndex])
+
+		result = {}
+		result['soln'] = TSPSolution(bssfRoute)
+		result['cost'] = bestAnt.distanceTraveled
+		result['time'] = endTime - startTime
+		result['count'] = 0
+		result['max'] = 0
+		result['total'] = 0
+		result['pruned'] = 0
+		return result
 		# while (termination condition not met)
 		# 	run_ants()
 		#	update_pheromones()
 		# Return BSSF
 
+	def run_ants(self, cities: List[City], edgeMatrix: List[List[int]], pheremoneMatrix: List[List[int]], antColony: List[Ant]):
+		newBest: Ant = None
+		ant: Ant
+		for ant in antColony:
 
+			# Pick the next city that the ant will travel to probabilistically
+			# -1 is returned if there is not a viable city that the ant can travel to
+			nextCity = ant.pick_next_city(cities, edgeMatrix, pheremoneMatrix)
+			while (nextCity != -1):
+				ant.visit_city(nextCity, edgeMatrix[ant.currentCity][nextCity])
+				nextCity = ant.pick_next_city(cities, edgeMatrix, pheremoneMatrix)
+
+			# If the ant did not visit all of the cities, don't update the pheremone matrix with it by setting its distance travelled to infinite
+			if len(ant.antPath) < len(cities):
+				ant.distanceTraveled = math.inf
+			else:
+				ant.distanceTraveled += edgeMatrix[ant.currentCity][ant.startCity]
+				if newBest == None or ant.distanceTraveled < newBest.distanceTraveled:
+					newBest = ant
+		return newBest
+
+	def update_pheremones(self, pheremoneMatrix: List[List[float]], antColony: List[Ant]):
+		EVAP_FACTOR = 0.5
+		# Update the pheremone matrix by evaporating some of the previous matrix's pheremone
+		for row in range(0, len(pheremoneMatrix)):
+			for col in range(0, len(pheremoneMatrix[0])):
+				pheremoneMatrix[row][col] = (1 - EVAP_FACTOR) * pheremoneMatrix[row][col]
+
+		# Add ant pheremones
+		for ant in antColony:
+			# Ignore the ants that didn't make it
+			if ant.distanceTraveled != math.inf:
+				for i, cityIndex in enumerate(ant.antPath):
+					pheremoneMatrix[cityIndex][ant.antPath[(i + 1) % len(ant.antPath)]] += 1 / ant.distanceTraveled
 
 		# def run_ants()
 		#	for each ant x:
@@ -232,22 +325,6 @@ class TSPSolver:
 		#			BSSF = ant_path
 
 
-
-		# def pick_next_city()
-		# 	for all cities
-		#		if cant reach or been to -> break
-		# 		get score (list)
-		#		sum += score
-
-		# 	for all cities
-		#		if cant reach or been to -> break
-		#		p[j] = score[j] / sum
-
-		# 	city = roulette(p)
-		# 	return city
-
-
-
 		# def update_pheromone()
 		#	initialize new array S for each edge ij
 		#	for each ant
@@ -257,6 +334,7 @@ class TSPSolver:
 		#	for each edge ij
 		#			P[i][j] = P[i][j] * (1 - EVAPORATION_RATE) + S[i][j]
 
-
-
-		pass
+# Does every ant start from a different random city each iteration?
+# What do we want as our terminating condition? BSSF not changing maybe? Pheremones converging?
+# What should we initialize the pheremone matrix with? We can't do 0 otherwise the numerator will never work
+# Are there any preferred alpha/beta/evaporation values?
