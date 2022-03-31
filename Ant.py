@@ -9,8 +9,9 @@ class Ant:
         self.citiesVisited.add(startCityIndex)
         self.currentCity = startCityIndex
         self.startCity = startCityIndex
-        self.ALPHA_PHEREMONE = 0
-        self.BETA_LENGTH = 1
+        # Personality surprisingly makes the ants better
+        self.ALPHA_PHEREMONE = random.random()
+        self.BETA_LENGTH = 1 * random.random() * 5
         self.distanceTraveled = 0
 
     def visit_city(self, cityIndex: int, pathCost: float):
@@ -21,6 +22,7 @@ class Ant:
 
     def pick_next_city(self, cities: List[City], edgeMatrix: List[List[int]], pheremoneMatrix: List[List[int]]) -> int:
 
+        EDGE_CONST = 100.0
         visitingCity: City
 
         # Calculate the numerators - pheremone ^ Alpha * 1/L ^ Beta
@@ -30,7 +32,7 @@ class Ant:
             distToCity = edgeMatrix[self.currentCity][visitingCity._index]
             if not visitingCity._index in self.citiesVisited and distToCity != math.inf:
                 pheremoneWeight = pow(pheremoneMatrix[self.currentCity][visitingCity._index], self.ALPHA_PHEREMONE)
-                edgeWeight = pow(1.0/(distToCity+0.0001), self.BETA_LENGTH)
+                edgeWeight = pow(EDGE_CONST/(distToCity+0.0001), self.BETA_LENGTH)
                 numerator = pheremoneWeight * edgeWeight
                 cityNumeratorList.append((visitingCity._index, numerator))
                 cityDenominator += numerator
