@@ -1,6 +1,7 @@
 import math
 from typing import List
 from TSPClasses import *
+from Constant import Constant
 class Ant:
 
     def __init__(self, startCityIndex) -> None:
@@ -10,8 +11,8 @@ class Ant:
         self.currentCity = startCityIndex
         self.startCity = startCityIndex
         # Personality surprisingly makes the ants better
-        self.ALPHA_PHEREMONE = random.random()
-        self.BETA_LENGTH = 1 * random.random() * 5
+        self.ALPHA_PHEREMONE = random.random() * Constant.ALPHA
+        self.BETA_LENGTH = random.random() * Constant.BETA
         self.distanceTraveled = 0
 
     def visit_city(self, cityIndex: int, pathCost: float):
@@ -22,7 +23,6 @@ class Ant:
 
     def pick_next_city(self, cities: List[City], edgeMatrix: List[List[int]], pheremoneMatrix: List[List[int]]) -> int:
 
-        EDGE_CONST = 100.0
         visitingCity: City
 
         # Calculate the numerators - pheremone ^ Alpha * 1/L ^ Beta
@@ -32,7 +32,7 @@ class Ant:
             distToCity = edgeMatrix[self.currentCity][visitingCity._index]
             if not visitingCity._index in self.citiesVisited and distToCity != math.inf:
                 pheremoneWeight = pow(pheremoneMatrix[self.currentCity][visitingCity._index], self.ALPHA_PHEREMONE)
-                edgeWeight = pow(EDGE_CONST/(distToCity+0.0001), self.BETA_LENGTH)
+                edgeWeight = pow(Constant.NUMERATOR_EDGE_CONST/(distToCity+0.0001), self.BETA_LENGTH)
                 numerator = pheremoneWeight * edgeWeight
                 cityNumeratorList.append((visitingCity._index, numerator))
                 cityDenominator += numerator

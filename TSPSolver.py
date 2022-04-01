@@ -13,6 +13,8 @@
 from typing import List, Set
 from xmlrpc.client import Boolean
 from Ant import Ant
+from Constant import Constant
+from SampleBranchAndBound import TSPSolverBandB
 
 from which_pyqt import PYQT_VER
 if PYQT_VER == 'PYQT5':
@@ -196,7 +198,9 @@ class TSPSolver:
 	'''
 
 	def branchAndBound( self, time_allowance=60.0 ):
-		pass
+		bbAlgo = TSPSolverBandB()
+		bbAlgo.setupWithScenario(self._scenario)
+		return bbAlgo.branchAndBound(time_allowance)
 
 
 
@@ -209,15 +213,13 @@ class TSPSolver:
 		algorithm</returns>
 	'''
 
-	# 4.5 hours - Jesse
+	# 5.5 hours - Jesse
 	def fancy( self,time_allowance=60.0 ):
 
 		# PSEUDO-CODE FOR ANT SYSTEM ALGORITHM
 
 		cities: List[City] = self._scenario.getCities()
 		edges: List[List[Boolean]] = self._scenario._edge_exists
-
-		NUM_ANTS = 10
 
 		# Create the cost matrix for easier reference
 		# Initialize array P of pheromone strength for each edge ij - can't initialize to 0 because numerator is multiplied
@@ -227,7 +229,7 @@ class TSPSolver:
 			edgeMatrix.append([])
 			pheremoneMatrix.append([])
 			for col in range(0, len(edges)):
-				pheremoneMatrix[row].append(1.0)
+				pheremoneMatrix[row].append(Constant.INIT_PHEREMONE)
 				if edges[row][col]:
 					edgeMatrix[row].append(cities[row].costTo(cities[col]))
 				else:
@@ -235,7 +237,7 @@ class TSPSolver:
 
 		# Initialize list of k ants
 		antColony = []
-		for i in range(0, NUM_ANTS):
+		for i in range(0, Constant.NUM_ANTS):
 			startCity = random.randint(0, len(cities) - 1)
 			antColony.append(Ant(startCity))
 
@@ -243,15 +245,21 @@ class TSPSolver:
 		startTime = time.time()
 		terminatingCondition = False
 		bestAnt: Ant = None
+		iterationsWithoutImprovement = 0
 		while not terminatingCondition and time.time() - startTime < time_allowance:
 			bestRoundAnt: Ant = self.run_ants(cities, edgeMatrix, pheremoneMatrix, antColony)
 			# Update the best ant if applicable
 			if bestAnt == None or bestRoundAnt.distanceTraveled < bestAnt.distanceTraveled:
 				bestAnt = bestRoundAnt
+				iterationsWithoutImprovement = 0
+			else:
+				iterationsWithoutImprovement += 1
+				if iterationsWithoutImprovement > Constant.ITER_WITHOUT_IMPROVEMENT:
+					terminatingCondition = True
 			self.update_pheremones(pheremoneMatrix, antColony)
 			# Clear the ants
 			antColony = []
-			for i in range(0, NUM_ANTS):
+			for i in range(0, Constant.NUM_ANTS):
 				startCity = random.randint(0, len(cities) - 1)
 				antColony.append(Ant(startCity))
 
@@ -301,11 +309,10 @@ class TSPSolver:
 		return newBest
 
 	def update_pheremones(self, pheremoneMatrix: List[List[float]], antColony: List[Ant]):
-		EVAP_FACTOR = 0.5
 		# Update the pheremone matrix by evaporating some of the previous matrix's pheremone
 		for row in range(0, len(pheremoneMatrix)):
 			for col in range(0, len(pheremoneMatrix[0])):
-				pheremoneMatrix[row][col] = (1 - EVAP_FACTOR) * pheremoneMatrix[row][col]
+				pheremoneMatrix[row][col] = (1 - Constant.EVAP_FACTOR) * pheremoneMatrix[row][col]
 
 		# Add ant pheremones
 		for ant in antColony:
@@ -333,8 +340,3 @@ class TSPSolver:
 
 		#	for each edge ij
 		#			P[i][j] = P[i][j] * (1 - EVAPORATION_RATE) + S[i][j]
-
-# Does every ant start from a different random city each iteration?
-# What do we want as our terminating condition? BSSF not changing maybe? Pheremones converging?
-# What should we initialize the pheremone matrix with? We can't do 0 otherwise the numerator will never work
-# Are there any preferred alpha/beta/evaporation values?
