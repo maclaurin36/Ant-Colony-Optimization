@@ -101,7 +101,7 @@ class TSPSolver:
 
 	# Written by Jesse total time - 1.5 hours
 	# Time complexity: O(n^2) - nearest neighbor * num cities
-	# Space complexity: O(n) - route of cities
+	# Space complexity: O(n^2) - edge matrix 
 	def greedy( self,time_allowance=60.0 ):
 		# Get the related information out of the class (make conceptually easier to understand)
 		cities: List[City] = self._scenario.getCities()
@@ -214,6 +214,8 @@ class TSPSolver:
 	'''
 
 	# 5.5 hours - Jesse
+	# Time Complexity: O(n^2*k*number of iterations)
+	# Space Complexity: O(n^2)
 	def fancy( self,time_allowance=60.0 ):
 
 		# PSEUDO-CODE FOR ANT SYSTEM ALGORITHM
@@ -253,12 +255,12 @@ class TSPSolver:
 		# Begin running the ants
 		# Time Complexity: The complexity of the main algorithm is difficult to quantify, because the ant's convergence on a path
 			# widely varies, and would be better analyzed by looking at the empirical data.  In each loop iteration we run all ants
-			# this takes O(k*n) time because we run k ants and each ant travels through k cities.  Thus, the total complexity would
-			# be O(k*n*number of iterations before convergence)
+			# this takes O(k*n^2) time because we run k ants and each ant travels through k cities.  Thus, the total complexity would
+			# be O(k*n^2*number of iterations before convergence)
 		# Space Complexity: O(n^2) to store pheremones and edges, O(k) to store ants, O(k*n) to store ant paths
 		while not terminatingCondition and time.time() - startTime < time_allowance:
 
-			# Time Complexity: O(k*n) construct k paths through n cities
+			# Time Complexity: O(k*n^2) construct k paths through n cities
 			# Space Complexity: O(k*n) store k paths through n cities
 			bestRoundAnt: Ant = self.run_ants(cities, edgeMatrix, pheremoneMatrix, antColony)
 
@@ -311,7 +313,8 @@ class TSPSolver:
 		# Return BSSF
 
 	# Run an iteration of ants (each ant finds circuit through cities)
-	# Time Complexity: O()
+	# Time Complexity: O(k*n^2)
+	# Space Complexity: O(n^2)
 	def run_ants(self, cities: List[City], edgeMatrix: List[List[int]], pheremoneMatrix: List[List[int]], antColony: List[Ant]):
 		newBest: Ant = None
 		ant: Ant
@@ -322,6 +325,10 @@ class TSPSolver:
 			# Time Complexity: O(n) - goes through each edge twice in the worst case doing O(1) work each time
 			# Space Complexity: O(n^2) because it utilizes the edge and pheremone matrix (O(n) space used to store edge scores for the ant)
 			nextCity = ant.pick_next_city(cities, edgeMatrix, pheremoneMatrix)
+
+			# While yet there are still more cities to visit continue visiting
+			# Time Complexity: O(n^2)
+			# Space Complexity: O(n^2)
 			while (nextCity != -1):
 				ant.visit_city(nextCity, edgeMatrix[ant.currentCity][nextCity])
 				nextCity = ant.pick_next_city(cities, edgeMatrix, pheremoneMatrix)
