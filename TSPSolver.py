@@ -223,6 +223,8 @@ class TSPSolver:
 
 		# Create the cost matrix for easier reference
 		# Initialize array P of pheromone strength for each edge ij - can't initialize to 0 because numerator is multiplied
+		# Time Complexity: O(n^2) - City cost O(1) * Num connections O(n^2)
+		# Space Complexity: O(n^2) - Store the pheremones and city costs
 		edgeMatrix: List[List[int]] = []
 		pheremoneMatrix: List[List[float]] = []
 		for row in range(0, len(edges)):
@@ -236,19 +238,33 @@ class TSPSolver:
 					edgeMatrix[row].append(math.inf)
 
 		# Initialize list of k ants
+		# Time Complexity: O(k)
+		# Space Complexity: O(k)
 		antColony = []
 		for i in range(0, Constant.NUM_ANTS):
 			startCity = random.randint(0, len(cities) - 1)
 			antColony.append(Ant(startCity))
 
-		# Begin running the ant algorithm - need to deal with the terminating condition
 		startTime = time.time()
 		terminatingCondition = False
 		bestAnt: Ant = None
 		iterationsWithoutImprovement = 0
+
+		# Begin running the ants
+		# Time Complexity: The complexity of the main algorithm is difficult to quantify, because the ant's convergence on a path
+			# widely varies, and would be better analyzed by looking at the empirical data.  In each loop iteration we run all ants
+			# this takes O(k*n) time because we run k ants and each ant travels through k cities.  Thus, the total complexity would
+			# be O(k*n*number of iterations before convergence)
+		# Space Complexity: O(n^2) to store pheremones and edges, O(k) to store ants, O(k*n) to store ant paths
 		while not terminatingCondition and time.time() - startTime < time_allowance:
+
+			# Time Complexity: O(k*n) construct k paths through n cities
+			# Space Complexity: O(k*n) store k paths through n cities
 			bestRoundAnt: Ant = self.run_ants(cities, edgeMatrix, pheremoneMatrix, antColony)
-			# Update the best ant if applicable
+
+			# Update the best ant and check the terminating condition
+			# Time Complexity: O(1)
+			# Space Complexity: O(1)
 			if bestAnt == None or bestRoundAnt.distanceTraveled < bestAnt.distanceTraveled:
 				bestAnt = bestRoundAnt
 				iterationsWithoutImprovement = 0
@@ -256,8 +272,15 @@ class TSPSolver:
 				iterationsWithoutImprovement += 1
 				if iterationsWithoutImprovement > Constant.ITER_WITHOUT_IMPROVEMENT:
 					terminatingCondition = True
+			
+			# Update the pheremone matrix with the new ant paths
+			# Time Complexity: O(n^2)
+			# Space Complexity: O(n^2)
 			self.update_pheremones(pheremoneMatrix, antColony)
+
 			# Clear the ants
+			# Time Complexity: O(k)
+			# Space Complexity: O(k)
 			antColony = []
 			for i in range(0, Constant.NUM_ANTS):
 				startCity = random.randint(0, len(cities) - 1)
@@ -287,6 +310,8 @@ class TSPSolver:
 		#	update_pheromones()
 		# Return BSSF
 
+	# Run an iteration of ants (each ant finds circuit through cities)
+	# Time Complexity: O()
 	def run_ants(self, cities: List[City], edgeMatrix: List[List[int]], pheremoneMatrix: List[List[int]], antColony: List[Ant]):
 		newBest: Ant = None
 		ant: Ant
@@ -294,12 +319,17 @@ class TSPSolver:
 
 			# Pick the next city that the ant will travel to probabilistically
 			# -1 is returned if there is not a viable city that the ant can travel to
+			# Time Complexity: O(n) - goes through each edge twice in the worst case doing O(1) work each time
+			# Space Complexity: O(n^2) because it utilizes the edge and pheremone matrix (O(n) space used to store edge scores for the ant)
 			nextCity = ant.pick_next_city(cities, edgeMatrix, pheremoneMatrix)
 			while (nextCity != -1):
 				ant.visit_city(nextCity, edgeMatrix[ant.currentCity][nextCity])
 				nextCity = ant.pick_next_city(cities, edgeMatrix, pheremoneMatrix)
 
 			# If the ant did not visit all of the cities, don't update the pheremone matrix with it by setting its distance travelled to infinite
+			# Also update bssf
+			# Time Complexity: O(1)
+			# Space Complexity: O(n*k) to store path for bssf
 			if len(ant.antPath) < len(cities):
 				ant.distanceTraveled = math.inf
 			else:
@@ -308,13 +338,21 @@ class TSPSolver:
 					newBest = ant
 		return newBest
 
+	# Update the pheremone matrix after finishing an iteration of running the ants
+	# Time Complexity: O(n^2) + O(n*k) = O(n^2), O(n^2) for evaporating pheremone from the matrix and O(n*k) for adding new pheremone for each ant
+	# Space Complexity: O(n^2) to store the pheremone matrix
 	def update_pheremones(self, pheremoneMatrix: List[List[float]], antColony: List[Ant]):
+
 		# Update the pheremone matrix by evaporating some of the previous matrix's pheremone
+		# Time Complexity: O(n^2)
+		# Space Complexity: O(n^2)
 		for row in range(0, len(pheremoneMatrix)):
 			for col in range(0, len(pheremoneMatrix[0])):
 				pheremoneMatrix[row][col] = (1 - Constant.EVAP_FACTOR) * pheremoneMatrix[row][col]
 
 		# Add ant pheremones
+		# Time Complexity: O(n*k)
+		# Space Complexity: O(n^2)
 		for ant in antColony:
 			# Ignore the ants that didn't make it
 			if ant.distanceTraveled != math.inf:

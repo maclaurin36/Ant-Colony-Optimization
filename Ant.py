@@ -4,28 +4,39 @@ from TSPClasses import *
 from Constant import Constant
 class Ant:
 
+    # Initialize an ant
+    # Time compleity: O(1)
+    # Space complexity: O(n) - ant path will grow to n city size
     def __init__(self, startCityIndex) -> None:
         self.antPath = [startCityIndex]
         self.citiesVisited = set()
         self.citiesVisited.add(startCityIndex)
         self.currentCity = startCityIndex
         self.startCity = startCityIndex
-        # Personality surprisingly makes the ants better
         self.ALPHA_PHEREMONE = random.random() * Constant.ALPHA
         self.BETA_LENGTH = random.random() * Constant.BETA
         self.distanceTraveled = 0
 
+    # Visit a city by adding it to the ants path
+    # Time Complexity: O(1)
+    # Space Complexity: O(1)
     def visit_city(self, cityIndex: int, pathCost: float):
         self.antPath.append(cityIndex)
         self.citiesVisited.add(cityIndex)
         self.currentCity = cityIndex
         self.distanceTraveled += pathCost
 
+    # Go through each of the possible cities and check for the max viable path balancing exploration and exploitation
+    # Time Complexity: O(n) Go through each edge twice to check viability O(1) and probabilistically pick one
+    # Space Complexity: O(n^2) Uses the edge and pheremone matrix to calculate probabilities
     def pick_next_city(self, cities: List[City], edgeMatrix: List[List[int]], pheremoneMatrix: List[List[int]]) -> int:
 
         visitingCity: City
 
         # Calculate the numerators - pheremone ^ Alpha * 1/L ^ Beta
+        # Time Complexity: O(n) It is important to note that checking if the ant has visited a city is O(1) because we use a hashset
+            # to store cities visited which has O(1) lookup time
+        # Time Complexity: O(n^2) Uses edge and pheremone matrix (also uses O(n) space to store edge scores)
         cityNumeratorList = []
         cityDenominator = 0
         for visitingCity in cities:
@@ -41,13 +52,20 @@ class Ant:
         if cityDenominator == 0:
             return -1
         else:
+            # Time Complexity: O(n)
+            # Space Complexity: O(n)
             return self.run_roulette(cityNumeratorList, cityDenominator)
 		
+    # Probabilistically pick which city to visit next
+    # Time complexity: O(n) Go throuch each edge score in the list while checking probability O(1) 
+    # Space complexity: O(n) Uses a list of edge scores in the numerator list
     def run_roulette(self, cityNumeratorList, cityDenominator):
         
         # Skip plain probability to cumulative probabilities and roulette
         prevProbability = 0
         randomFloat = random.random()
+
+        # Time Complexity: O(n) also constant factors are minimized by not calculating all cumulative probabilities
         for i in range(0, len(cityNumeratorList)):
             cityIndex = cityNumeratorList[i][0]
             cityNumerator = cityNumeratorList[i][1]
