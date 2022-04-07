@@ -11,8 +11,10 @@ class Ant:
         self.currentCity = startCityIndex
         self.startCity = startCityIndex
         # Personality surprisingly makes the ants better
-        self.ALPHA_PHEREMONE = random.random() * Constant.ALPHA
-        self.BETA_LENGTH = random.random() * Constant.BETA
+        # self.ALPHA_PHEREMONE = random.random() * Constant.ALPHA
+        # self.BETA_LENGTH = random.random() * Constant.BETA
+        self.ALPHA_PHEREMONE = Constant.ALPHA
+        self.BETA_LENGTH = Constant.BETA
         self.distanceTraveled = 0
 
     def visit_city(self, cityIndex: int, pathCost: float):
